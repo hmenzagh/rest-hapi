@@ -473,7 +473,7 @@ internals.generateJoiFieldModel = function(
     // EXPL: check for any valid nested fields
     for (const key in field) {
 	  // EXPL: do not create a nested field based on 'default'
-      if (key !== 'default' &&internals.isValidField(key, field[key], model)) {
+      if (key !== 'default' && internals.isValidField(key, field[key], model)) {
         nested[fieldName] = true
       }
     }
