@@ -92,6 +92,7 @@ config.embedAssociations = false
  */
 config.enableCreatedAt = true
 config.enableUpdatedAt = true
+config.enableTouchedAt = true
 config.enableDeletedAt = true
 config.enableCreatedBy = false
 config.enableUpdatedBy = false

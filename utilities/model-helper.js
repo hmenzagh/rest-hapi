@@ -34,9 +34,19 @@ internals.createModel = function(Schema, mongoose) {
           type: Types.Date,
           allowOnCreate: false,
           allowOnUpdate: false
-        }
+        },
       }
       Schema.add(updatedAt)
+    }
+    if (config.enableTouchedAt) {
+      const touchedAt = {
+        touchedAt: {
+          type: Types.Date,
+          allowOnCreate: false,
+          allowOnUpdate: false
+        },
+      }
+      Schema.add(touchedAt)
     }
     if (config.enableDeletedAt) {
       const deletedAt = {

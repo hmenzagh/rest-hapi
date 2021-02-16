@@ -532,7 +532,12 @@ async function _createHandler(model, request, Log) {
         document.createdAt = new Date()
       }
     }
-
+    if (config.enableTouchedAt) {
+      for (const document of payload) {
+        document.touchedAt = new Date()
+      }
+    }
+	
     let data
     try {
       data = await model.create(payload)
@@ -698,7 +703,10 @@ async function _updateHandler(model, _id, request, Log) {
     }
 
     if (config.enableUpdatedAt) {
-      payload.updatedAt = new Date()
+		payload.updatedAt = new Date();
+    }
+	if (config.enableTouchedAt) {
+		payload.touchedAt = new Date();
     }
     let result
     try {
