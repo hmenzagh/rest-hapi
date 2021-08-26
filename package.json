@@ -3,6 +3,7 @@
   "version": "2.2.0",
   "description": "A RESTful API generator for hapi",
   "main": "rest-hapi.js",
+  "type": "commonjs",
   "bin": {
     "rest-hapi-cli": "./rest-hapi-cli.js"
   },
