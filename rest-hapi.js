@@ -82,7 +82,7 @@ async function register(server, options) {
     return h.continue
   })
 
-  const mongoose = mongooseInit(options.mongoose, Log, config)
+  const mongoose = await mongooseInit(options.mongoose, Log, config)
 
   logUtil.logActionStart(Log, 'Initializing Server')
 
@@ -165,7 +165,7 @@ function getLogger(label) {
  * @param config
  * @returns {*}
  */
-function mongooseInit(mongoose, logger, config) {
+async function mongooseInit(mongoose, logger, config) {
   const Log = logger.bind('mongoose-init')
 
   mongoose.Promise = Promise
@@ -184,7 +184,12 @@ function mongooseInit(mongoose, logger, config) {
     config.mongo.options
   )
 
-  mongoose.connect(config.mongo.URI, options)
+  try {
+    await mongoose.connect(config.mongo.URI, options)
+  } catch (err) {
+    Log.error(err)
+    process.exit(1)
+  }
 
   globals.mongoose = mongoose
 
