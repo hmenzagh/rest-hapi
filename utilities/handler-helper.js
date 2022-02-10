@@ -1,3 +1,4 @@
+/* eslint-disable no-throw-literal */
 'use strict'
 
 const Boom = require('@hapi/boom')
@@ -542,13 +543,20 @@ async function _createHandler(model, request, Log) {
     try {
       data = await model.create(payload)
     } catch (err) {
-      Log.error(err)
       if (err.code === 11000) {
-        throw Boom.conflict('There was a duplicate key error.')
+        throw {
+          boomError: Boom.conflict('There was a duplicate key error.'),
+          originalError: err,
+          compoundError: true
+        }
       } else {
-        throw Boom.badImplementation(
-          'There was an error creating the resource.'
-        )
+        throw {
+          boomError: Boom.badImplementation(
+            'There was an error creating the resource.'
+          ),
+          originalError: err,
+          compoundError: true
+        }
       }
     }
 
@@ -714,13 +722,20 @@ async function _updateHandler(model, _id, request, Log) {
         runValidators: config.enableMongooseRunValidators
       })
     } catch (err) {
-      Log.error(err)
       if (err.code === 11000) {
-        throw Boom.conflict('There was a duplicate key error.')
+        throw {
+          boomError: Boom.conflict('There was a duplicate key error.'),
+          originalError: err,
+          compoundError: true
+        }
       } else {
-        throw Boom.badImplementation(
-          'There was an error updating the resource.'
-        )
+        throw {
+          boomError: Boom.badImplementation(
+            'There was an error updating the resource.'
+          ),
+          originalError: err,
+          compoundError: true
+        }
       }
     }
     if (result) {
@@ -2526,8 +2541,29 @@ function getModel(model) {
 }
 
 function handleError(err, message, boomFunction, Log) {
+  let originalError = null
+
+  if (err.compoundError) {
+    originalError = err.originalError
+    err = err.boomError
+  }
+
+  if (config.errorHandlerModifier) {
+    const newError = config.errorHandlerModifier(
+      err,
+      originalError,
+      message,
+      boomFunction,
+      Log
+    )
+    if (newError) {
+      err = newError
+    }
+  }
+
   message = message || 'There was an error processing the request.'
   boomFunction = boomFunction || Boom.badImplementation
+
   if (!err.isBoom) {
     Log.error(err)
     throw boomFunction(message)
