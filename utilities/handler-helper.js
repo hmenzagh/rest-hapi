@@ -408,7 +408,7 @@ async function _findHandler(model, _id, request, Log) {
 
       return result
     } else {
-      throw Boom.notFound('No resource was found with that id.')
+      handleError(Boom.notFound('No resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -537,17 +537,19 @@ async function _createHandler(model, request, Log) {
         document.touchedAt = new Date()
       }
     }
-	
+
     let data
     try {
       data = await model.create(payload)
     } catch (err) {
-      Log.error(err)
       if (err.code === 11000) {
-        throw Boom.conflict('There was a duplicate key error.')
+        handleError(err, 'There was a duplicate key error.', Boom.conflict, Log)
       } else {
-        throw Boom.badImplementation(
-          'There was an error creating the resource.'
+        handleError(
+          err,
+          'There was an error creating the resource.',
+          Boom.badImplementation,
+          Log
         )
       }
     }
@@ -703,10 +705,10 @@ async function _updateHandler(model, _id, request, Log) {
     }
 
     if (config.enableUpdatedAt) {
-		payload.updatedAt = new Date();
+      payload.updatedAt = new Date()
     }
-	if (config.enableTouchedAt) {
-		payload.touchedAt = new Date();
+    if (config.enableTouchedAt) {
+      payload.touchedAt = new Date()
     }
     let result
     try {
@@ -716,10 +718,13 @@ async function _updateHandler(model, _id, request, Log) {
     } catch (err) {
       Log.error(err)
       if (err.code === 11000) {
-        throw Boom.conflict('There was a duplicate key error.')
+        handleError(err, 'There was a duplicate key error.', Boom.conflict, Log)
       } else {
-        throw Boom.badImplementation(
-          'There was an error updating the resource.'
+        handleError(
+          err,
+          'There was an error updating the resource.',
+          Boom.badImplementation,
+          Log
         )
       }
     }
@@ -746,7 +751,7 @@ async function _updateHandler(model, _id, request, Log) {
       }
       return result
     } else {
-      throw Boom.notFound('No resource was found with that id.')
+      handleError(Boom.notFound('No resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -911,7 +916,7 @@ async function _deleteOneHandler(model, _id, hardDelete, request, Log) {
       }
       return true
     } else {
-      throw Boom.notFound('No resource was found with that id.')
+      handleError(Boom.notFound('No resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -1219,7 +1224,7 @@ async function _addOneHandler(
       }
       return true
     } else {
-      throw Boom.notFound('No resource was found with that id.')
+      handleError(Boom.notFound('No resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -1415,7 +1420,7 @@ async function _removeOneHandler(
       }
       return true
     } else {
-      throw Boom.notFound('No resource was found with that id.')
+      handleError(Boom.notFound('No resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -1560,7 +1565,7 @@ async function _addManyHandler(
       return _.isObject(item) ? _.assignIn({}, item) : item
     })
     if (_.isEmpty(request.payload)) {
-      throw Boom.badRequest('Payload is empty.')
+      handleError(Boom.badRequest('Payload is empty.'))
     }
 
     const ownerObject = await ownerModel
@@ -1626,7 +1631,7 @@ async function _addManyHandler(
       }
       return true
     } else {
-      throw Boom.notFound('No owner resource was found with that id.')
+      handleError(Boom.notFound('No owner resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -1771,7 +1776,7 @@ async function _removeManyHandler(
       return _.isObject(item) ? _.assignIn({}, item) : item
     })
     if (_.isEmpty(request.payload)) {
-      throw Boom.badRequest('Payload is empty.')
+      handleError(Boom.badRequest('Payload is empty.'))
     }
     const ownerObject = await ownerModel
       .findOne({ _id: ownerId })
@@ -1820,7 +1825,7 @@ async function _removeManyHandler(
       }
       return true
     } else {
-      throw Boom.notFound('No owner resource was found with that id.')
+      handleError(Boom.notFound('No owner resource was found with that id.'))
     }
   } catch (err) {
     handleError(err, null, null, Log)
@@ -1995,7 +2000,7 @@ async function _getAllHandler(
       )
     }
     if (!result) {
-      throw Boom.notFound('owner object not found')
+      handleError(Boom.notFound('owner object not found'))
     }
     result = result[associationName]
     let childIds = []
@@ -2003,8 +2008,10 @@ async function _getAllHandler(
     if (association.type === 'MANY_MANY') {
       childIds = result.map(object => {
         if (!object[association.model]) {
-          throw Boom.badRequest(
-            'association object "' + association.model + '" does not exist'
+          handleError(
+            Boom.badRequest(
+              'association object "' + association.model + '" does not exist'
+            )
           )
         }
         return object[association.model]._id
@@ -2055,7 +2062,7 @@ async function _getAllHandler(
             )
           })
           if (!data) {
-            throw Boom.notFound('child object not found')
+            handleError(Boom.notFound('child object not found'))
           }
           const fields = data.toJSON()
           delete fields._id
@@ -2209,20 +2216,24 @@ async function _setAssociation(
         }
 
         if (!childAssociation.include) {
-          throw Boom.badRequest(
-            'Missing association between ' +
-              ownerModel.modelName +
-              ' and ' +
-              childModel.modelName +
-              '.'
+          handleError(
+            Boom.badRequest(
+              'Missing association between ' +
+                ownerModel.modelName +
+                ' and ' +
+                childModel.modelName +
+                '.'
+            )
           )
         }
 
         const childAssociationName = childAssociation.include.as
 
         if (!childObject[childAssociationName]) {
-          throw Boom.badRequest(
-            childAssociationName + ' association does not exist.'
+          handleError(
+            Boom.badRequest(
+              childAssociationName + ' association does not exist.'
+            )
           )
         }
 
@@ -2274,10 +2285,10 @@ async function _setAssociation(
         })
       ])
     } else {
-      throw Boom.badRequest('Association type incorrectly defined.')
+      handleError(Boom.badRequest('Association type incorrectly defined.'))
     }
   } else {
-    throw Boom.notFound('Child object not found.')
+    handleError(Boom.notFound('Child object not found.'))
   }
 }
 
@@ -2400,10 +2411,10 @@ async function _removeAssociation(
         })
       ])
     } else {
-      throw Boom.badRequest('Association type incorrectly defined.')
+      handleError(Boom.badRequest('Association type incorrectly defined.'))
     }
   } else {
-    throw Boom.notFound('Child object not found.')
+    handleError(Boom.notFound('Child object not found.'))
   }
 }
 
@@ -2526,10 +2537,26 @@ function getModel(model) {
 }
 
 function handleError(err, message, boomFunction, Log) {
+  let logIfNotBoom = true
+  if (config.errorHandlerModifier) {
+    const newErrorResults = config.errorHandlerModifier(
+      err,
+      message,
+      boomFunction,
+      Log
+    )
+    if (newErrorResults) {
+      message = newErrorResults.message
+      boomFunction = newErrorResults.boomFunction
+      logIfNotBoom = newErrorResults.logIfNotBoom
+    }
+  }
   message = message || 'There was an error processing the request.'
   boomFunction = boomFunction || Boom.badImplementation
   if (!err.isBoom) {
-    Log.error(err)
+    if (logIfNotBoom) {
+      Log.error(err)
+    }
     throw boomFunction(message)
   } else {
     throw err

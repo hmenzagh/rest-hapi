@@ -358,4 +358,16 @@ config.swaggerHost = undefined
  */
 config.esm = false
 
+/**
+ * If not set do undefined, this function will be called when an error occurs.
+ * returns:
+ * 	- a boolean indicating whether the error should be logged or not
+ * 	- a string containing the error message
+ * 	- an object containing the error type
+ * default: undefined
+ * @type {function}
+ */
+
+config.errorHandlerModifier = undefined
+
 module.exports = config
