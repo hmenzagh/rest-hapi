@@ -28,10 +28,12 @@ module.exports = async function(server, mongoose, logger, config) {
     for (const file of files) {
       const ext = path.extname(file)
       if (ext === '.js') {
-        const fileName = path.basename(file, '.js')
-
         // EXPL: register all the additional endpoints
-        require(apiPath + '/' + fileName)(server, mongoose, logger)
+        const fileName = path.basename(file, '.js')
+        const apiPrecursor = require(apiPath + '/' + fileName)
+
+        const apiFunction = config.esm ? apiPrecursor.default : apiPrecursor
+        apiFunction(server, mongoose, logger)
       }
     }
   } catch (err) {
